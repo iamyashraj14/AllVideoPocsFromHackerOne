@@ -1,27 +1,35 @@
 ---
 name: hackerone-pocs
 description: >-
-  Reference library of real, publicly disclosed HackerOne vulnerability reports
-  (POCs) mirrored in this repository, grouped into 119 weakness/CWE categories
-  (8,670 report files). Use for defensive security research, learning a
-  vulnerability class from real fixed bugs, finding disclosed examples of a bug
-  type (XSS, SSRF, IDOR, SQLi, CSRF, RCE, auth bypass, etc.), studying reporter
-  write-ups, or looking up severity/bounty context. Triggers on requests like
-  "find HackerOne reports about <weakness>", "show real POCs for <bug class>",
-  "examples of <vulnerability> from disclosed reports", or any question about the
-  reports stored under weakness/ or jsonReports/.
+  Comprehensive, technique-level knowledge base distilled from real, publicly
+  disclosed HackerOne vulnerability reports (POCs) mirrored in this repository —
+  119 weakness/CWE categories, 8,670 report files. Use for defensive security
+  research, learning how a vulnerability class actually manifests and gets
+  exploited in the wild, recognizing vulnerable code/config patterns, reviewing
+  code or designs for a bug class, explaining root causes and remediations, and
+  finding disclosed real-world examples (XSS, SSRF, IDOR, SQLi, CSRF, RCE/SSTI,
+  XXE, deserialization, request smuggling, auth bypass, privilege escalation,
+  business-logic, path traversal, open redirect, clickjacking, info disclosure,
+  and more). Triggers on requests like "how does <bug class> work with real
+  examples", "find HackerOne reports about <weakness>", "review this for <bug
+  class>", "what are common <weakness> bypasses", or any question about the
+  reports under weakness/ or jsonReports/.
 ---
 
-# HackerOne Disclosed-Report POCs
+# HackerOne Disclosed-Report POCs — Technique Knowledge Base
 
-This repository is a searchable, offline mirror of **publicly disclosed**
-HackerOne reports, categorized by weakness type. Everything here is already
-public (disclosed by the program and the researcher). Use it for **defensive
-security, learning, and research** — understanding how real vulnerability
-classes manifest, how researchers write them up, and how programs triaged and
-paid them. Do not use it to target live systems.
+This repository is an offline mirror of **publicly disclosed** HackerOne
+reports (POCs), categorized by weakness type. Everything here is already public.
+Use it for **defensive security, learning, code review, and research**:
+understanding how real vulnerability classes arise, recognizing the vulnerable
+patterns, and citing concrete disclosed examples. Do not use it to attack
+systems you are not authorized to test.
 
-## What's in the repo
+The `references/` files below are **distilled from the actual write-ups** in
+this corpus — each recurring technique is tied to the real reports that
+demonstrate it (by title and `hackerone.com/reports/<id>` URL).
+
+## Repository layout
 
 ```
 weakness/<Category>/          119 categories, one folder per weakness type
@@ -32,52 +40,65 @@ reportLinksHackerOne          list of all report IDs
 utils/                        scripts to (re)build the corpus and search it
 ```
 
-Each report JSON has these useful fields:
-- `title`, `url` (the hackerone.com/reports/<id> link), `weakness.name`
-- `severity.score` / `severity_rating`, `formatted_bounty`
-- `reporter.username`, `team.handle` (the program), `disclosed_at`
-- `vulnerability_information` — **the actual write-up / POC text** (plain) and
-  `vulnerability_information_html` (HTML version)
-- `cve_ids`, `state`, `substate`
+Key JSON fields: `title`, `url`, `weakness.name`, `severity.score`,
+`formatted_bounty`, `reporter.username`, `team.handle` (program),
+`vulnerability_information` (**the write-up / POC**), `cve_ids`, `disclosed_at`.
 
 ## How to use this skill
 
-1. **Identify the weakness category.** Consult `references/catalog.md` — it lists
-   all 119 categories with report counts and 3 representative reports each.
-   Map the user's phrasing to a category name (e.g. "clickjacking" →
-   `UI Redressing (Clickjacking)`, "open redirect" → `Open Redirect`,
-   "prototype pollution / logic" → often under `Business Logic Errors` or
-   `Violation of Secure Design Principles`).
+- **To explain or teach a bug class** (with real examples), or **review code /
+  a design** for it → read the matching technique reference below. Each lists
+  root-cause patterns, real disclosed examples, recurring bypass tricks, and
+  remediation.
+- **To find disclosed reports for a category** → `references/catalog.md` maps
+  all 119 categories to report counts and representative reports; then open
+  `weakness/<Category>/index.md` for the full list.
+- **To read one write-up** → open `weakness/<Category>/<id>.json` and read
+  `vulnerability_information`:
+  ```bash
+  jq -r '.title, .url, .severity.score, .formatted_bounty, "---", .vulnerability_information' \
+    "weakness/SQL Injection/<id>.json"
+  ```
+- **To search across the corpus** by keyword / program / CVE → `references/searching.md`.
 
-2. **List the reports in that category.** Read `weakness/<Category>/index.md`
-   for the full curated list (title, URL, severity, reporter, bounty).
+## Technique references (distilled from the reports)
 
-3. **Read a specific write-up.** Open `weakness/<Category>/<id>.json` and read
-   the `vulnerability_information` field for the researcher's POC/explanation.
-   Quick extraction:
-   ```bash
-   jq -r '.title, .url, .severity.score, .formatted_bounty, "---", .vulnerability_information' \
-     "weakness/SQL Injection/952501.json"
-   ```
-
-4. **Search across the corpus** when the category is unknown or you want to grep
-   by keyword, program, reporter, CVE, etc. See `references/searching.md`.
+- `references/techniques-injection.md` — XSS (reflected/stored/DOM, mutation,
+  SVG/markdown, postMessage), SQL injection, command/code injection, SSTI,
+  ImageMagick/Ghostscript, git flag injection, XXE, insecure deserialization
+  (incl. PHP phar), CRLF/response splitting.
+- `references/techniques-access-control.md` — IDOR, broken access control,
+  authorization/authentication bypass, OAuth/SAML flaws, session issues,
+  privilege escalation, subdomain takeover, business-logic abuse (race
+  conditions, smart-contract econ bugs).
+- `references/techniques-ssrf-and-server.md` — SSRF (cloud metadata, DNS-rebind
+  ToCToU, blocklist/redirect bypasses, blind SSRF), path traversal / arbitrary
+  file read & write, unrestricted file upload, HTTP request smuggling, DoS.
+- `references/techniques-client-side.md` — CSRF (token/Origin gaps, OAuth-CSRF,
+  `.json` suffix bypass), open redirect (OAuth `redirect_uri`, `next=`), UI
+  redressing / clickjacking, reverse tabnabbing.
+- `references/methodology.md` — cross-cutting patterns the corpus keeps showing:
+  chaining low-severity bugs into criticals, where high-bounty bugs cluster,
+  recon habits, and a defensive review checklist.
 
 ## Guidance
 
-- Prefer the curated `weakness/<Category>/` folders over `jsonReports/` — they're
-  deduplicated and categorized. Fall back to `jsonReports/` only for a report ID
-  not present under `weakness/`.
-- When summarizing a report, cite the `url` so the user can read the original.
-- Bounty/severity fields are frequently `null` (program didn't disclose them) —
-  say "not disclosed" rather than treating null as zero.
-- This corpus is a snapshot; it does not update itself. `utils/buildRepo.sh`
-  re-downloads from public sources if the user wants a refresh.
-- Keep the framing defensive: explain, teach, compare, and reference. Don't
-  turn a disclosed write-up into an actionable attack against a specific live
-  target.
+- Prefer the curated `weakness/<Category>/` folders over `jsonReports/`.
+- When you cite a technique, name the real report and its `url` so the user can
+  read the original write-up.
+- `severity.score` / `formatted_bounty` are often `null` (not disclosed) — say
+  "not disclosed" rather than treating null as zero.
+- Keep the framing defensive: explain, teach, recognize, remediate. Don't turn a
+  write-up into an operational attack against a specific live target.
+- This corpus is a snapshot; `utils/buildRepo.sh` re-downloads from public
+  sources if a refresh is wanted.
 
 ## References
 
+- `references/techniques-injection.md`
+- `references/techniques-access-control.md`
+- `references/techniques-ssrf-and-server.md`
+- `references/techniques-client-side.md`
+- `references/methodology.md`
 - `references/catalog.md` — all 119 categories, counts, representative reports.
-- `references/searching.md` — grep/jq/script recipes for searching the corpus.
+- `references/searching.md` — grep/jq recipes for querying the corpus.
