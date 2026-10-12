@@ -80,6 +80,10 @@ Key JSON fields: `title`, `url`, `weakness.name`, `severity.score`,
 - `references/methodology.md` — cross-cutting patterns the corpus keeps showing:
   chaining low-severity bugs into criticals, where high-bounty bugs cluster,
   recon habits, and a defensive review checklist.
+- `references/payload-list.md` — running collection of validated payloads /
+  detection probes (XSS WAF bypasses, SSTI/SQLi/SSRF/open-redirect probes) for
+  **authorized, in-scope** testing. Append new working payloads here with their
+  context.
 
 ## Guidance
 
@@ -100,5 +104,6 @@ Key JSON fields: `title`, `url`, `weakness.name`, `severity.score`,
 - `references/techniques-ssrf-and-server.md`
 - `references/techniques-client-side.md`
 - `references/methodology.md`
+- `references/payload-list.md` — validated payloads / detection probes (scope-only).
 - `references/catalog.md` — all 119 categories, counts, representative reports.
 - `references/searching.md` — grep/jq recipes for querying the corpus.
