@@ -55,11 +55,45 @@ context-correct output encoding, or a sanitizer/filter is bypassable.
   `class`/`target` injection → full-page click hijack, phishing modal, reverse
   tabnabbing — *Stored XSS in RDoc wiki pages* (662287).
 
-**Remediation:** context-aware output encoding; strict CSP as defense-in-depth;
-sanitize on a strict allow-list (and re-test entity/mutation bypasses); validate
-`postMessage` origin against an exact allow-list and never route message data to
-`eval`/navigation; serve user uploads (SVG/HTML) from a sandboxed origin with
-`Content-Disposition: attachment`.
+### WAF / filter evasion
+WAFs (Akamai, Cloudflare, etc.) mostly pattern-match on literal keywords
+(`alert`, `javascript:`, `onerror=`, `<script`). Real bypasses avoid the literal
+string while keeping the same behavior — useful for understanding why
+signature-based blocking is not a fix.
+
+- **Build the function name instead of writing it.** Regex `.source` yields a
+  string without the literal keyword appearing:
+  ```
+  <!--><svg+onload='top[/al/.source+/ert/.source](document.cookie)'>
+  ```
+  URL-encoded (`%2f`=`/`, `%2e`=`.`, `%2b`=`+`, `%27`=`'`, `+`=space) this is the
+  commonly shared *Akamai WAF bypass* form:
+  ```
+  <!--><svg+onload=%27top[%2fal%2f%2esource%2b%2fert%2f%2esource](document.cookie)%27>
+  ```
+  It decodes to `top["alert"](document.cookie)` → `alert(document.cookie)`. Three
+  evasion ideas stack here: a `<!-->` comment breakout (confuses the parser/WAF
+  tokenizer), the `svg onload` event sink (no `<script>`), and `top[...]` bracket
+  access with the name assembled from `/al/.source + /ert/.source` so no literal
+  `alert` is present. `alert(document.cookie)` is only a harmless PoC marker —
+  the same vector would be a real exfiltration sink.
+- **Other keyword-free constructors** seen in the corpus / in the wild:
+  `self[...]`, `window[...]`, `this[...]` bracket access; `String.fromCharCode`;
+  template/`eval`-free gadgets (see "Stored XSS" expression-template example
+  131450); HTML-entity and mixed-case/overlong encodings to split signatures.
+
+**Only use these against targets you are explicitly authorized to test** (an
+in-scope bug-bounty asset or your own system); document each working payload
+with the exact context (reflection point, encoding, WAF behavior) so it is
+reproducible.
+
+**Remediation:** context-aware output encoding; strict CSP as defense-in-depth
+(a well-scoped CSP neutralizes `svg onload` and bracket-constructed calls even
+when a WAF signature is bypassed); sanitize on a strict allow-list (and re-test
+entity/mutation/encoding bypasses); validate `postMessage` origin against an
+exact allow-list and never route message data to `eval`/navigation; serve user
+uploads (SVG/HTML) from a sandboxed origin with `Content-Disposition:
+attachment`. Treat a WAF as a speed bump, never the control that fixes the bug.
 
 ---
 
