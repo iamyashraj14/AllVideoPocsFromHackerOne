@@ -84,6 +84,9 @@ Key JSON fields: `title`, `url`, `weakness.name`, `severity.score`,
   detection probes (XSS WAF bypasses, SSTI/SQLi/SSRF/open-redirect probes) for
   **authorized, in-scope** testing. Append new working payloads here with their
   context.
+- `references/recon.md` — attack-surface discovery for authorized, in-scope
+  targets: Shodan multi-asset dorks (SSL CN/org, ASN, favicon hash, HTTP title),
+  Shodan CLI → httpx pipeline, and complementary sources (crt.sh, Censys/FOFA).
 
 ## Guidance
 
@@ -105,5 +108,6 @@ Key JSON fields: `title`, `url`, `weakness.name`, `severity.score`,
 - `references/techniques-client-side.md`
 - `references/methodology.md`
 - `references/payload-list.md` — validated payloads / detection probes (scope-only).
+- `references/recon.md` — attack-surface discovery (Shodan dorks + CLI, scope-only).
 - `references/catalog.md` — all 119 categories, counts, representative reports.
 - `references/searching.md` — grep/jq recipes for querying the corpus.
